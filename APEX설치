@@ -1,0 +1,404 @@
+1. APEX & ORDS 설치
+
+# 설치 요구사항
+oracle 12.1 or later
+EE, SE, XE
+RAC
+Memory_targer > 300MB
+Browser - Chrome, Mozilla, Asfari, Edge
+Web listener - Web lister or ORDS 19.x or later
+Oracle XML DB requirement - must be installed 
+
+# install
+1. APEX 다운로드 
+apex_21.1.zip 다운로드 및 압축 풀기
+디렉토리 변경  "apex"
+2. APEX DB 환경 구성 - sys 계정으로 진행
+ Full 개발자 환경인 경우 
+   @apexins.sql SYSAUX SYSAUX TEMP /i/  
+ Run time 환경인 경우
+   @apexrtins.sql SYSAUX SYSAUX TEMP /i/ 
+환경 구성 과정에서 DB계정이 생성됨
+  - APEX_210100(or APEX_210200) : APEX 스키마와 메터장보 소유자
+  - FLOWS_FILES : APEX 업로드 파일들의 소유자
+  - APEX_PUBLIC_USER : ORDS, HTTP Server, mod_sql 관련 구성에 사용
+
+RESTFul 서비스 구성된 경우 추가되는 DB 계정
+  - APEX_REST_PUBLIC_USER : APEX에 저장된 RESTfule 서비스 정의 호출용 계정
+  - APEX_LISTENR : APEX에 저장된 RESTful 서비스 정의를 쿼리하는 데 사용되는 계정
+
+- APEX 인스턴스 관리자 계정 생성
+APEX 인스턴스 관리자 : APEX 워크스페이스 프로비저인 관리, 기능 및 인스턴스 구성, 보안 관리등을 책임 지는 APEX 관리 수퍼유저임
+ apxchpwd.sql 실행
+ account : admin
+ email address : admin@...
+ password : Welcome1#
+
+* apxchpwd.sql 역할
+- 초도 APEX 인스턴스 관리자(admin) 생성 및 비밀번호 변경
+- Runtime 환경을 개발환경으로 변환 할때 비밀번로 변경
+- 인스턴스 관리자(admin) 비밀번호 변경
+- 인스턴스 관리자 계정 unlocking
+
+3. 리스트타트 프로세스(http 데몬)
+
+4. APEX_PUBLIC_USER계정 환경설정
+- apex_public_user 계정 활성화 및 비밀번호 변경
+
+  ALTER USER APEX_PUBLIC_USER ACCOUNT UNLOCK ;
+  ALTER USER APEX_PUBLIC_USER IDENTIFIED BY Welcome1;
+
+
+- RESTful 서비스 환경설정
+APEX를 처음 설치 할 경우에는 apex_rest_config.sql 반드시 실행해야 함.
+SYS 계정으로 apex_rest_config.sql 실행
+APEX_LISTENER, APEX_REST_PUBLIC_USER 계정 및 비밀번호 생성이 수행됨
+
+ALTER USER anonymous ACCOUNT UNLOCK;
+
+- ORDS standalone 서비스 설치 및 구성
+1. ords 다운로드 및 압축해제
+
+mkdir ords
+cd ords
+unzip ords.version.number.zip
+
+* context root를 /ords 로 하고싶을 때는 ords.war로 /apex로 하고 싶을 경우는 ords.war를 apex.war로 rename 하면 됨
+
+2. 이미지 디렉토리 복사
+
+apex/images 디렉토리를 ords 서비스가 설치 된 디렉토리로 복사를 해야함
+
+3. ORDS 설치 프로그램 권한 스크립트 실행
+
+스크립트는 할당된 데이터베이스 사용자에게 ORDS 설치, 업그레이드, 검증 및 제거할 수 있는 권한을 제공하는 스크립트임.
+
+SYS 또는 별도 만들어진 계정을 지정할 수 있음
+
+SYS 계정으로 ords 계정 생성
+create user ords identified by Welcome1 default tablespace users quota unlimited on users;
+grant connect, resource to ords;
+
+SQL>@installer/ords_installer_privileges.sql ords
+
+4. ords command line으로 설치
+
+java -jar ords.war install advanced
+
+
+
+3. ORDS 서비스 설치 검증
+
+This Oracle REST Data Services instance has not yet been configured.
+Please complete the following prompts
+
+
+Enter the location to store configuration data: /home/woko/ords/config
+Specify the database connection type to use.
+Enter number for [1] Basic  [2] TNS  [3] Custom URL [1]:2
+Enter the TNS Network Alias:pdb18
+Enter the TNS folder location:/home/oracle/oracle_19c/network/admin
+Enter 1 if you want to verify/install Oracle REST Data Services schema or 2 to skip this step [1]:
+Enter the database password for ORDS_PUBLIC_USER:
+Confirm password:
+Requires to login with administrator privileges to verify Oracle REST Data Services schema.
+
+Enter the administrator username:ords
+Enter the database password for ords:
+Confirm password:
+Connecting to database user: ords url: jdbc:oracle:thin:@pdb18?TNS_ADMIN=/home/oracle/oracle_19c/network/admin
+
+Retrieving information.
+Enter the default tablespace for ORDS_METADATA [SYSAUX]:
+Enter the temporary tablespace for ORDS_METADATA [TEMP]:
+Enter the default tablespace for ORDS_PUBLIC_USER [SYSAUX]:
+Enter the temporary tablespace for ORDS_PUBLIC_USER [TEMP]:
+Enter 1 if you want to use PL/SQL Gateway or 2 to skip this step.
+If using Oracle Application Express or migrating from mod_plsql then you must enter 1 [1]:
+Enter the PL/SQL Gateway database user name [APEX_PUBLIC_USER]:
+Enter the database password for APEX_PUBLIC_USER:
+Confirm password:
+Enter 1 to specify passwords for Application Express RESTful Services database users (APEX_LISTENER, APEX_REST_PUBLIC_US                                                                                                 ER) or 2 to skip this step [1]:
+Enter the database password for APEX_LISTENER:
+Confirm password:
+Enter the database password for APEX_REST_PUBLIC_USER:
+Confirm password:
+Enter a number to select a feature to enable:
+   [1] SQL Developer Web  (Enables all features)
+   [2] REST Enabled SQL
+   [3] Database API
+   [4] REST Enabled SQL and Database API
+   [5] None
+Choose [1]:1
+2022-02-25T05:35:26.750Z INFO        reloaded pools: []
+Installing Oracle REST Data Services version 21.4.1.r0250904
+... Log file written to /home/woko/ords_install_core_2022-02-25_143526_00928.log
+... Verified database prerequisites
+... Created Oracle REST Data Services proxy user
+... Created Oracle REST Data Services schema
+... Granted privileges to Oracle REST Data Services
+... Created Oracle REST Data Services database objects
+... Log file written to /home/woko/ords_install_datamodel_2022-02-25_143543_00757.log
+... Log file written to /home/woko/ords_install_scheduler_2022-02-25_143545_00005.log
+... Log file written to /home/woko/ords_install_apex_2022-02-25_143547_00497.log
+Completed installation for Oracle REST Data Services version 21.4.1.r0250904. Elapsed time: 00:00:22.260
+
+Enter 1 if you wish to start in standalone mode or 2 to exit [1]:1
+Enter the APEX static resources location:/home/woko/ords/apex/images
+Enter 1 if using HTTP or 2 if using HTTPS [1]:2
+Enter the HTTPS port [8443]:
+Enter the SSL hostname:localhost
+Enter 1 to use the self-signed certificate or 2 if you will provide the SSL certificate [1]:
+2022-02-25T05:37:52.623Z INFO        HTTPS and HTTPS/2 listening on host: localhost port: 8443
+2022-02-25T05:37:52.640Z INFO        Disabling document root because the specified folder does not exist: /home/woko/ord                                                                                                 s/config/ords/standalone/doc_root
+2022-02-25T05:37:53.372Z INFO        Configuration properties for: |apex||
+error.keepErrorMessages=true
+db.password=******
+db.tnsAliasName=pdb18
+cache.directory=/tmp/apex/cache
+debug.debugger=false
+security.requestValidationFunction=wwv_flow_epg_include_modules.authorize
+log.logging=false
+cache.duration=days
+security.maxEntries=2000
+cache.expiration=7
+resource.templates.enabled=true
+error.maxEntries=50
+debug.printDebugToScreen=false
+jdbc.DriverType=thin
+jdbc.MinLimit=1
+db.tnsDirectory=/home/oracle/oracle_19c/network/admin
+jdbc.statementTimeout=900
+cache.procedureNameList=
+jdbc.InactivityTimeout=1800
+jdbc.MaxLimit=10
+misc.defaultPage=apex
+cache.maxEntries=500
+database.api.enabled=true
+db.username=APEX_PUBLIC_USER
+cache.type=lru
+jdbc.MaxConnectionReuseCount=1000
+restEnabledSql.active=true
+security.disableDefaultExclusionList=false
+jdbc.MaxStatementsLimit=10
+cache.caching=false
+feature.sdw=true
+misc.compress=
+security.validationFunctionType=plsql
+jdbc.InitialLimit=3
+cache.monitorInterval=60
+log.maxEntries=50
+db.connectionType=tns
+
+99999
+./params/ords_params.properties 예
+
+db.hostname=wokot450.kr.oracle.com
+db.port=1521
+db.servicename=pdb18.kr.oracle.com
+plsql.gateway.add=false
+rest.services.apex.add=false
+rest.services.ords.add=true
+schema.tablespace.default=SYSAUX
+schema.tablespace.temp=TEMP
+standalone.https.port=8443
+standalone.mode=true
+standalone.ssl.cert.path=/home/woko/ords/ssl/cert
+standalone.ssl.host=wokot450.kr.oracle.com
+standalone.ssl.key.path=/home/woko/ords/ssl/key
+standalone.use.https=true
+standalone.use.ssl.cert=true
+user.public.password=password
+user.tablespace.default=SYSAUX
+user.tablespace.temp=TEMP
+
+
+
+jdbc.auth.enabled=true   --Enable Database Authentication
+
+Enable Database Authentication
+
+# Default for all pools.
+
+$JAVA_HOME/bin/java -jar ords.war set-property jdbc.auth.enabled true
+
+# Specific pool.
+$JAVA_HOME/bin/java -jar ords.war set-property --conf pdb1 jdbc.auth.enabled true
+
+또는
+"../ords/config/ords/defaults.xml"에 추가
+
+
+<entry key="jdbc.auth.enabled">true</entry>
+
+PL/SQL gateway 인 경우에는 아래 내용 추가
+
+<entry key="security.requestValidationFunction">wwv_flow_epg_include_modules.authorize</entry>
+
+SSL 구성
+
+# Create a self-signed certificate in a JKS keystore.
+keytool -genkey -keyalg RSA -alias selfsigned -keystore keystore.jks \
+   -dname "CN=wokot450.kr.oracle.com, OU=Example Department, O=Example Company, L=Birmingham, ST=West Midlands, C=GB" \
+   -storepass Welcome1 -validity 3600 -keysize 2048 -keypass Welcome1
+
+# Create a PKCS12 keystore from the JKS keystore.
+keytool -importkeystore -srckeystore keystore.jks -srcalias selfsigned -srcstorepass Welcome1 \
+   -destkeystore keystore.p12 -deststoretype PKCS12 -deststorepass Welcome1 -destkeypass Welcome1
+
+# Extract the key and certificate in PEM format.
+openssl pkcs12 -in keystore.p12 -nodes -nocerts -out wokot450.kr.oracle.com-key.pem
+openssl pkcs12 -in keystore.p12 -nokeys -out wokot450.kr.oracle.com.pem
+
+# Convert them to DER format.
+openssl pkcs8 -topk8 -inform PEM -outform DER -in wokot450.kr.oracle.com-key.pem -out wokot450.kr.oracle.com-key.der -nocrypt
+openssl x509 -inform PEM -outform DER -in wokot450.kr.oracle.com.pem -out wokot450.kr.oracle.com.der
+
+ls *.der
+wokot450.kr.oracle.com.der  wokot450.kr.oracle.com-key.der
+
+cd /home/woko/ords/config/ords/standalone
+vi standalone.properties
+jetty.secure.port=8443
+ssl.cert=/home/woko/ords/ssl/wokot450.kr.oracle.com.der
+ssl.cert.key=/home/woko/ords/ssl/wokot450.kr.oracle.com-key.der
+ssl.host=wokot450.kr.oracle
+standalone.context.path=/ords
+standalone.doc.root=/home/woko/ords/config/ords/standalone/doc_root
+standalone.scheme.do.not.prompt=true
+standalone.static.context.path=/i
+standalone.static.path=/home/woko/ords/apex/images
+
+
+** static 구성
+
+vi ../config/ords/standalone/standalone.properties
+
+mkdir -p /home/woko/ords/config/ords/standalone/doc_root
+
+java -jar ords.war standalone --doc-root /home/woko/ords/config/ords/standalone/doc_root
+
+
+mkdir -p /home/woko/ords/logs
+
+vi startords
+#!/bin/bash
+LOGFILE=/home/woko/ords/logs/ords-`date +"%Y""%m""%d"`.log
+export JAVA_OPTIONS="-Dorg.eclipse.jetty.server.Request.maxFormContentSize=3000000 -Duser.timezone=UTC"
+nohup java ${JAVA_OPTIONS} -jar ords.war standalone >> $LOGFILE 2>&1 &
+echo "if you want to View, using tail -f $LOGFILE"
+
+vi stopords
+#!/bin/bash
+kill `ps -ef | grep ords.war | awk '{print $2}'`
+
+
+5. 네트워크 서비스 구성( 12c later)
+네트워크 서비스를 활성화해야 아웃바운드 메일을 보내거나 웹서비스를 사용하거나 APEX에서 PDF 보고서 인쇄를 사용할 수 있음
+
+SYS 계정으로
+
+BEGIN
+    DBMS_NETWORK_ACL_ADMIN.APPEND_HOST_ACE(
+        host => '*',
+        ace => xs$ace_type(privilege_list => xs$name_list('connect'),
+                           principal_name => 'APEX_210200',
+                           principal_type => xs_acl.ptype_db));
+END;
+/
+
+ORA-44416 : Invalid CAL 에러 발생시
+
+https://docs.oracle.com/en/database/oracle/application-express/21.1/htmig/enabling-network-services-in-Oracle-db11g-or-later.html#GUID-C795F54B-D05F-4463-8424-052FD4C1CE52 참조
+
+
+
+
+https://192.168.0.23:8443/ords
+워크스페이스 생성
+
+https://192.168.0.23:8443/ords/apex_admin   -- APEX admin 페이지
+admin
+Welcome1#
+
+
+SELECT *
+FROM DBA_ROLE_PRIVS
+WHERE GRANTED_ROLE = 'XDBADMIN';
+
+EXEC DBMS_EPG.CREATE_DAD('HR_DAD', '/plsql/*');
+EXEC DBMS_EPG.SET_DAD_ATTRIBUTE('HR_DAD', 'database-username', 'HR');
+GRANT EXECUTE ON DBMS_EPG TO HR;
+
+conn HR/HR@pdb20
+EXEC DBMS_EPG.AUTHORIZE_DAD('HR_DAD');
+
+SET SERVEROUTPUT ON;
+BEGIN
+  show_dad_auth_status('HR_DAD');
+END;
+/
+
+
+
+CREATE OR REPLACE PROCEDURE HelloWorld AS
+BEGIN
+	htp.htitle('My first dynamic Web page');
+	htp.print('Hello world');
+	htp.line;
+END HelloWorld;
+/
+
+
+CREATE OR REPLACE PROCEDURE html_page IS
+BEGIN
+  HTP.HTMLOPEN;                            -- generates <HTML>
+  HTP.HEADOPEN;                            -- generates <HEAD>
+  HTP.TITLE('Title');                      -- generates <TITLE>Hello</TITLE>
+  HTP.HEADCLOSE;                           -- generates </HTML> 
+
+  -- generates <BODY TEXT="#000000" BGCOLOR="#FFFFFF">
+  HTP.BODYOPEN( cattributes => 'TEXT="#000000" BGCOLOR="#FFFFFF"');
+
+  -- generates <H1>Heading in the HTML File</H1>
+  HTP.HEADER(1, 'Heading in the HTML File');
+
+  HTP.PARA;                                 -- generates <P>        
+  HTP.PRINT('Some text in the HTML file.'); 
+  HTP.BODYCLOSE;                            -- generates </BODY>
+  HTP.HTMLCLOSE;                            -- generates </HTML>
+END;
+/
+
+
+CREATE OR REPLACE PROCEDURE print_employees IS
+  CURSOR emp_cursor IS
+    SELECT last_name, first_name
+      FROM hr.employees
+        ORDER BY last_name;
+BEGIN
+  HTP.PRINT('<html>');
+  HTP.PRINT('<head>');
+  HTP.PRINT('<meta http-equiv="Content-Type" content="text/html">');
+  HTP.PRINT('<title>List of Employees</title>');
+  HTP.PRINT('</head>'); 
+  HTP.PRINT('<body TEXT="#000000" BGCOLOR="#FFFFFF">');
+  HTP.PRINT('<h1>List of Employees</h1>');
+  HTP.PRINT('<table width="40%" border="1">');
+  HTP.PRINT('<tr>');
+  HTP.PRINT('<th align="left">Last Name</th>');
+  HTP.PRINT('<th align="left">First Name</th>');
+  HTP.PRINT('</tr>');
+  FOR emp_record IN emp_cursor LOOP
+    HTP.PRINT('<tr>');
+    HTP.PRINT('<td>' || emp_record.last_name  || '</td>');
+    HTP.PRINT('<td>' || emp_record.first_name || '</td>');
+  END LOOP;
+  HTP.PRINT('</table>');
+  HTP.PRINT('</body>');
+  HTP.PRINT('</html>');
+END;
+/
+
+
+oracle    4613  4314  0 Jan21 ?        01:04:03 /home/oracle/em/agent_13.5.0.0.0/oracle_common/jdk/bin/java -Xmx134M -XX:MaxMetaspaceSize=224M -server -Djava.security.egd=file:///dev/./urandom -Dsun.lang.ClassLoader.allowArraySyntax=true -XX:-UseLargePages -XX:+UseLinuxPosixThreadCPUClocks -XX:+UseConcMarkSweepGC -XX:+CMSClassUnloadingEnabled -XX:+UseCompressedOops -DHTTPClient.dontSeekTerminatingChunk=true -Dwatchdog.pid=4314 -cp /home/oracle/em/agent_13.5.0.0.0/jdbc/lib/ojdbc8.jar:/home/oracle/em/agent_13.5.0.0.0/ucp/lib/ucp.jar:/home/oracle/em/agent_13.5.0.0.0/oracle_common/modules/com.oracle.http_client.http_client.jar:/home/oracle/em/agent_13.5.0.0.0/oracle_common/modules/oracle.xdk/xmlparserv2.jar:/home/oracle/em/agent_13.5.0.0.0/oracle_common/modules/oracle.dms/dms.jar:/home/oracle/em/agent_13.5.0.0.0/oracle_common/modules/oracle.odl/ojdl.jar:/home/oracle/em/agent_13.5.0.0.0/oracle_common/modules/oracle.odl/ojdl2.jar:/home/oracle/em/agent_13.5.0.0.0/lib/optic.jar:/home/oracle/em/agent_13.5.0.0.0/sysman/jlib/log4j-core.jar:/home/oracle/em/agent_13.5.0.0.0/jlib/sshd-common.jar:/home/oracle/em/agent_13.5.0.0.0/jlib/sshd-core.jar:/home/oracle/em/agent_13.5.0.0.0/jlib/sshd-sftp.jar:/home/oracle/em/agent_13.5.0.0.0/jlib/slf4j-api-1.7.5.jar:/home/oracle/em/agent_13.5.0.0.0/jlib/bcprov-jdk15on-162.jar:/home/oracle/em/agent_13.5.0.0.0/jlib/bcpkix-jdk15on-162.jar:/home/oracle/em/agent_13.5.0.0.0/jlib/gcagent_core.jar:/home/oracle/em/agent_13.5.0.0.0/sysman/jlib/emagentSDK-intg.jar:/home/oracle/em/agent_13.5.0.0.0/sysman/jlib/emagentSDK.jar oracle.sysman.gcagent.tmmain.TMMain
